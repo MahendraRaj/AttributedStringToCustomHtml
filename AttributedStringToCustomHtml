@@ -1,0 +1,101 @@
+public extension NSAttributedString {
+    func customHtmlString() -> String? {
+        var str : String = self.string
+        let attributes = self.attributes(at: 0, longestEffectiveRange: nil, in: NSRangeFromString(self.string))
+        self.enumerateAttributes(in: NSMakeRange(0, self.length), options: .longestEffectiveRangeNotRequired){
+            values,range,isStop in
+            var styleValues : [String : String] = [String : String]()
+            for i in values.keys{
+                switch i.rawValue{
+                case NSAttributedStringKey.font.rawValue:
+                    if let v : UIFont = values[i] as! UIFont{
+                        if let traits : UIFontDescriptorSymbolicTraits = v.fontDescriptor.symbolicTraits{
+                            switch traits{
+                            case UIFontDescriptorSymbolicTraits.traitBold:
+                                styleValues.updateValue("bold", forKey: "font-weight")
+                                styleValues.updateValue("bold", forKey: "font-style")
+                                break;
+                            case UIFontDescriptorSymbolicTraits.traitItalic:
+                                styleValues.updateValue("italic", forKey: "font-style")
+                                break;
+                            default :
+                                break;
+                            }
+                        }
+                    }
+                    break
+                case NSAttributedStringKey.foregroundColor.rawValue:
+                    if let color : UIColor = values[i] as! UIColor{
+                        if color != UIColor.black{
+                            styleValues.updateValue(color.hex(), forKey: "color")
+                        }
+                    }
+                    break
+                case NSAttributedStringKey.paragraphStyle.rawValue:
+                    break
+                case NSAttributedStringKey.underlineColor.rawValue,NSAttributedStringKey.underlineStyle.rawValue:
+                    styleValues.updateValue("underline", forKey: "text-decoration")
+
+                    break
+                case NSAttributedStringKey.backgroundColor.rawValue:
+                    if let color : UIColor = values[i] as! UIColor{
+                        styleValues.updateValue(color.hex(), forKey: "background-color")
+                    }
+                    break;
+                default :
+                    
+                    break;
+                }
+            }
+            var styleStr : String = ""
+            for s in styleValues.keys{
+                switch s{
+                case "font-style":
+                    if let sVal : String = styleValues[s]{
+                        if sVal.elementsEqual("italic"){
+                            if let word : String = self.string.substring(from: range.location, length: range.length){
+                                let rString : String = "<i>\(word)</i>"
+                                str = self.string.replacingOccurrences(of: word, with: rString)
+                            }
+                        }else if sVal.elementsEqual("bold"){
+                            if let word : String = self.string.substring(from: range.location, length: range.length){
+                                let rString : String = "<b>\(word)</b>"
+                                str = self.string.replacingOccurrences(of: word, with: rString)
+                            }
+                        }
+                    }
+                    styleValues.removeValue(forKey: s)
+                    break
+                case "text-decoration":
+                    if let sVal : String = styleValues[s]{
+                        if let word : String = self.string.substring(from: range.location, length: range.length){
+                            let rString : String = "<u>\(word)</u>"
+                            str = self.string.replacingOccurrences(of: word, with: rString)
+                        }
+                    }
+                    styleValues.removeValue(forKey: s)
+                    break
+                default :
+                if let t : String = styleValues[s]{
+                    styleStr.append("\(s)")
+                    styleStr.append(":")
+                    styleStr.append("\(t)")
+                    styleStr.append(";")
+                }
+                }
+            }
+            if var ss = self.string.substring(from: range.location, length: range.length){
+                if !ss.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty{
+                    if styleValues.count > 0{
+                    let u : String = """
+                    <span style="\(styleStr)">\(ss) </span>
+                    """
+                       str = str.replacingOccurrences(of: ss, with: u)
+                    }
+                }
+            }
+        }
+    
+        return str
+    }
+}
