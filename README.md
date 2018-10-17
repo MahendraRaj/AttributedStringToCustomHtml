@@ -7,3 +7,9 @@
 
 <p>You can add the rest of the <code>UIFontDescriptorSymbolicTraits</code> as you wanted in the extension method <code>
 customHtmlString()</code></p>
+
+
+<h3>Example</h3><hr/>
+
+<code><b>Bold Text</b></code> is converted to `<b>Bold Text</b>`.
+ 
